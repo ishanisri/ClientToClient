@@ -1,4 +1,4 @@
-# Python program to implement server side of chat room.
+# Python program to implement server side.
 import socket
 import select
 import sys
@@ -45,18 +45,30 @@ msg_buffer = ""
 def clientthread(conn, addr):
 
 	# sends a message to the client whose user object is conn
-	message_first = "You are connected now"
+	pos = len(list_of_clients)
+	if(pos-1) == 0:
+		print(str(conn.getpeername()) + " connected as A")
+		message_first = "You are connected as A"
+	elif(pos -1) == 1:
+		print(str(conn.getpeername()) + " connected as C")
+		message_first = "You are connected as C"
+	elif(pos -1) == 2:
+		print(str(conn.getpeername()) + " connected as D")
+		message_first = "You are connected as D"
+
+
 	conn.send(message_first.encode())
 
 	while True:
 			try:
 				message = conn.recv(1030).decode()
-				print(message)
 
 				if message:
 					destination_addr = message[0]
+					# get the destination client number
 					msg =message[1:]
 					if (msg.lower() == "exit"):
+						# shut down the thread in case of exit.
 						last_msg = "Closing down"
 						conn.send(last_msg.encode())
 						conn.close()
@@ -64,35 +76,23 @@ def clientthread(conn, addr):
 
 					else:
 						if(msg[:4] == "file:"):
+							# check if file is being forwarded
 							dest_file = message[0]
 							msg_info = msg[5:]
-							#print ("<" + str(conn.getpeername()) + "> " + msg)
-							# Calls broadcast function to send message to all
-							print("message has to be forwarded...")
 							message_to_send = "<" + str(conn.getpeername()) + "> " + msg_info
-							print("have to forward to"+dest_file)
 							routing(message_to_send, conn,dest_file,addr)
-							#print ("<" + str(conn.getpeername()) + "> " + msg)
-							# Calls broadcast function to send message to all
-							#message_to_send = "file:<" + str(conn.getpeername()) + "> " + msg
-							#print("have to forward to"+dest_file)
-							#broadcast(message_to_send, conn,dest_file,addr)
-
 
 
 						elif(len(message) != 1 ):
 							"""prints the message and address of the
 							user who just sent the message on the server
 							terminal"""
-							print(destination_addr)
 							print ("<" + str(conn.getpeername()) + "> " + msg)
-							# Calls broadcast function to send message to all
+							# Calls routing function to forward the message
 							message_to_send = "<" + str(conn.getpeername()) + "> " + msg
 							routing(message_to_send, conn,destination_addr,addr)
 						else:
 							pass
-							#destination_addr = message[0]
-							#print("Received destination message")
 
 
 				else:
@@ -107,48 +107,17 @@ def clientthread(conn, addr):
 clients who's object is not the same as the one sending
 the message """
 def routing(message, conn, destination_addr, addr):
-	print("destination addr is"+str(destination_addr))
-	print("Request sent by")
-	print(conn)
-	print("list of all clients")
-	print(list_of_clients)
 	dest = int(destination_addr)
 	connection = list_of_clients[dest]
-	print(connection)
-	'''dest_conn = list_of_clients[destination_addr]
-	print(type(dest_conn))
-	print("connection found to forward to")
-	try:
-		dest_conn.send(message.encode())
-	except:
-		dest_conn.close()
-
-		# if the link is broken, we remove the client
-		remove(dest_conn) '''
 
 
 	for clients in list_of_clients:
 		if clients == connection:
 			try:
-				#print(message[23:29])
-				#if(message[23:29] == "file:"):
-				#	print("in file block")
-				#	block = ""
-				#	for i in message:
-				#		print("Looping through characters")
-				#		if(len(block.encode('utf-8'))) < 2048:
-				#			block += i
-				#		else:
-				#			clients.send(block.encode())
-				#			print("Sending packets")
-				#			block = i
-				#	clients.send(block.encode())
-				#else:
 				clients.send(message.encode())
 				print("Sent to the client")
 			except:
 				clients.close()
-
 				# if the link is broken, we remove the client
 				remove(clients)
 
@@ -171,10 +140,8 @@ while True:
 	a message to all available people in the chatroom"""
 	list_of_clients.append(conn)
 
-	print((list_of_clients))
-
 	# prints the address of the user that just connected
-	print(str(conn.getpeername()) + " connected")
+
 
 	# creates and individual thread for every user
 	# that connects

@@ -1,4 +1,4 @@
-# Python program to implement client side of chat room.
+# Python program to implement client side.
 import socket
 import select
 import sys
